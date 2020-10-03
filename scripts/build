@@ -98,6 +98,11 @@ if `contains "$args" "--minify"` || `contains "$args" "-m"`; then
     target_new=$target_min
 fi
 
+if ! [ -d $public_dir ]; then
+    echo -e "ERROR No directory called \"$public_dir\" exists."
+    exit 1
+fi
+
 if ! [ -f $public_dir/index.html ]; then
     echo -e "ERROR: No \"index.html\" exists within \"$public_dir\"."
     exit 1
@@ -112,10 +117,12 @@ if `contains "$args" "--compress"` || `contains "$args" "-c"`; then
     target_new="$target_new.gz"
     
     shopt -s nullglob
-    for css in $css_dir/*.css; do
-        gzip -f $css
-        sed -i "s/$(basename $css)/$(basename $css).gz/" $build_dir/index.html
-    done
+    if [ -d $css_dir ]; then
+        for css in $css_dir/*.css; do
+            gzip -f $css
+            sed -i "s/$(basename $css)/$(basename $css).gz/" $build_dir/index.html
+        done
+    fi
 fi
 
 sed -i "s/$target/$target_new/" $build_dir/index.html 
