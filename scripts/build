@@ -1,0 +1,118 @@
+#!/bin/sh
+
+build_dir=./dist
+public_dir=./public
+css_dir=./public/css
+
+target=bundle.js
+target_min=bundle.min.js
+
+function check_dependency {
+    if ! command -v $1 &>/dev/null; then
+        echo "ERROR: Missing dependency \"$1\"."
+        exit 1
+    fi
+}
+
+check_dependency elm
+check_dependency uglifyjs
+check_dependency gzip
+
+function print_help {
+    local help=("Usage: $0 MAIN [-o|--optimize] [-c|--compress] [-m|--minify]\n\n"
+                "Available options:\n"
+                "\tMAIN\t\tThe main file for the elm application.\n"
+                "\t-o,--optimize\tOptimizations to make code smaller and faster.\n"
+                "\t-m,--minify\tMinify the output javascript bundle.\n"
+                "\t-c,--compress\tCompress the output javascript bundle.")
+    echo -e ${help[*]}
+}
+
+function contains {
+    if [[ "$1" =~ (^|[[:space:]])"$2"($|[[:space:]]) ]]; then
+        return 0
+    fi 
+    return 1
+} 
+
+rm -rf $build_dir/*
+
+valid="--help -h --optimize -o --compress -c --minify -m"
+
+args="$@"
+
+if `contains "$args" "--help"` || `contains "$args" "-h"`; then
+    print_help
+    exit 0
+fi
+
+if [ "$#" -lt 1 ] || contains "$valid" "$1"; then
+    echo -e "ERROR: Missing argument \"MAIN\".\n"
+    print_help
+    exit 1
+fi
+
+main=$1
+
+if ! [ -f "$main" ]; then
+    echo "ERROR: File does not exist: \"$main\"."
+    exit 1
+fi
+
+args="${@:2}"
+
+for arg in $args; do
+    if ! `contains "$valid" "$arg"`; then
+        echo -e "ERROR: Invalid argument \"$arg\".\n"
+        print_help
+        exit 1
+    fi
+done
+
+set -e
+
+echo "Compiling $target ..."
+if `contains "$args" "--optimize"` || `contains "$args" "-o"`; then
+    elm make $main --output $build_dir/$target --optimize 1>/dev/null
+else
+    elm make $main --output $build_dir/$target 1>/dev/null
+fi
+
+target_new=$target
+uglify_args=("pure_funcs=\"F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9\","
+             "pure_getters=true,"
+             "keep_fargs=false,"
+             "unsafe_comps=true,"
+             "unsafe=true,"
+             "passes=2")
+
+if `contains "$args" "--minify"` || `contains "$args" "-m"`; then
+    echo "Minifying $target ..."
+
+    uglifyjs $build_dir/$target -c \
+        "${uglify_args[*]}" \
+        -o $build_dir/$target_min && \
+        uglifyjs $build_dir/$target_min -m -o $build_dir/$target_min
+
+    rm $build_dir/$target 
+    target_new=$target_min
+fi
+
+cp -r $public_dir/* $build_dir/
+
+if `contains "$args" "--compress"` || `contains "$args" "-c"`; then
+    echo "Compressing $target_new ..."
+
+    gzip -f $build_dir/$target_new 
+    target_new="$target_new.gz"
+    
+    shopt -s nullglob
+    for css in $css_dir/*.css; do
+        gzip -f $css
+        sed -i "s/$(basename $css)/$(basename $css).gz/" $build_dir/index.html
+    done
+fi
+
+sed -i "s/$target/$target_new/" $build_dir/index.html 
+
+echo -e "\nSuccess!\n\t $main ───> $build_dir/$target_new"
