@@ -98,6 +98,11 @@ if `contains "$args" "--minify"` || `contains "$args" "-m"`; then
     target_new=$target_min
 fi
 
+if ! [ -f $public_dir/index.html ]; then
+    echo -e "ERROR: No \"index.html\" exists within \"$public_dir\"."
+    exit 1
+fi
+
 cp -r $public_dir/* $build_dir/
 
 if `contains "$args" "--compress"` || `contains "$args" "-c"`; then
