@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# please for the love of god don't change the build_dir to /, as it is deleted
+# forcefully.
+
 build_dir=./dist
 public_dir=./public
 css_dir=./public/css
@@ -35,7 +38,7 @@ function contains {
     return 1
 } 
 
-rm -rf $build_dir/*
+rm -rf $build_dir
 
 valid="--help -h --optimize -o --compress -c --minify -m"
 
@@ -99,11 +102,13 @@ if `contains "$args" "--minify"` || `contains "$args" "-m"`; then
 fi
 
 if ! [ -d $public_dir ]; then
+    rm -rf $build_dir
     echo -e "ERROR No directory called \"$public_dir\" exists."
     exit 1
 fi
 
 if ! [ -f $public_dir/index.html ]; then
+    rm -rf $build_dir
     echo -e "ERROR: No \"index.html\" exists within \"$public_dir\"."
     exit 1
 fi
