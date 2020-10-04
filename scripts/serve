@@ -1,0 +1,14 @@
+#!/bin/sh
+
+build_dir=./dist/
+
+function check_dependency {
+    if ! command -v $1 &>/dev/null; then
+        echo "ERROR: Missing dependency \"$1\"."
+        exit 1
+    fi
+}
+
+check_dependency http-server
+
+http-server $build_dir -g -o / -c-1

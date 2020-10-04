@@ -47,7 +47,8 @@ target_min=bundle.min.js
 
 ## Dependencies
 The primary dependencies that you need to install in order to run these scripts
-are: `elm` (for compilation) and `uglify-js` (for minification).
+are: `elm` (for compilation), `http-server` (for running the debug server) and
+`uglify-js` (for minification).
 
 The `build` script will automatically detect missing dependencies, so don't
 worry about too much going wrong.
@@ -56,6 +57,12 @@ worry about too much going wrong.
 [Here](https://guide.elm-lang.org/install/elm.html) are the instructions for
 installing elm (honestly surprised you're looking at this if you don't already
 have it installed).
+
+### Installing HttpServer
+HttpServer must be installed globally (as a command-line app).
+```
+$ npm install http-server --global
+```
 
 ### Installing UglifyJS
 UglifyJS must be installed globally (as a command-line app).
@@ -100,7 +107,9 @@ Usage: ./scripts/build MAIN [-o|--optimize] [-c|--compress] [-m|--minify]
  	-c,--compress	Compress the output javascript bundle.
 ```
 
-### Production Builds
+### Building
+
+#### Production Builds
 E.g. compiling a production build (no minification, optimization or
 compression).
 ```
@@ -113,7 +122,7 @@ Success!
 	 src/Main.elm ───> ./dist/bundle.js
 ```
 
-### Release Builds
+#### Release Builds
 E.g. compiling a release build (with minification, optimization and
 compression).
 ```
@@ -128,3 +137,25 @@ Success!
 	 src/Main.elm ───> ./dist/bundle.min.js.gz
 ```
 
+### Running
+There is another script that you can use for running the debug server.
+```
+$ ./scripts/serve
+```
+```
+Starting up http-server, serving ./dist/
+Available on:
+  http://127.0.0.1:8080
+  http://100.108.118.252:8080
+Hit CTRL-C to stop the server
+open: http://127.0.0.1:8080/
+
+...
+```
+
+### Cleaning Up
+A final script I've included is just for cleaning up your build directories.
+It'll just remove the `dist/` and `elm-stuff/` directories.
+```
+$ ./scripts/clean
+```
